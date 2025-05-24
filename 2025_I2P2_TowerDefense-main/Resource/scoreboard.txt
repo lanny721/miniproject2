@@ -1,0 +1,16 @@
+Player13 20905
+Player15 9705
+Player16 355
+Player14 255
+Daniel 80
+XiaoLiang 70
+XiaoWang 60
+DaWang 50
+DaMei 40
+DaNiu 30
+DaHua 30
+KaiJie 20
+MeiHua 20
+XiaoHua 15
+XiaoMin 10
+XiaoMei 10
