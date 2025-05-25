@@ -31,7 +31,7 @@ void WinScene::Initialize() {
 
     //
     std::vector<std::pair<std::string, int>> scores;
-    std::ifstream file("C:/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
+    std::ifstream file("C:/miniproject2/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
     std::string name;
     int score;
     while (file >> name >> score) {
@@ -44,7 +44,7 @@ void WinScene::Initialize() {
     scores.push_back({newPlayerName, newScore});
 
     std::sort(scores.begin(), scores.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
-    std::ofstream fout("C:/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
+    std::ofstream fout("C:/miniproject2/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
     for (const auto& score : scores) {
         fout << score.first << " " << score.second << "\n";
     }

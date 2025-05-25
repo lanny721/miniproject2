@@ -69,7 +69,7 @@ void ScoreboardScene::Terminate() {
     printf("Terminate ScoreboardScene end\n");
 }
 void ScoreboardScene::getScoreboard(std::vector<std::pair<std::string, int>>& scores) {
-    std::ifstream file("C:/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
+    std::ifstream file("C:/miniproject2/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
     std::string name;
     int score;
 
