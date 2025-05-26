@@ -22,7 +22,7 @@ public:
     void PrevOnClick(int stage);
     void BackOnClick(int stage);
 
-    void getScoreboard(std::vector<std::pair<std::string, int>>& scores);
+    void getScoreboard(std::vector<std::tuple<std::string, int, std::string>>& scores);
 };
 
 #endif   // SCOREBOARDSCENE_HPP

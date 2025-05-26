@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <utility>
 #include <fstream>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 #include "Engine/AudioHelper.hpp"
 #include "Engine/GameEngine.hpp"
@@ -35,8 +38,9 @@ void ScoreboardScene::Initialize() {
 
     //stable label
     AddNewObject(new Engine::Label("Score Board", "pirulen.ttf", 60, halfW - 80, halfH / 3 -80 ,255, 255, 255, 255, 0.5, 0.5));
-    AddNewObject(new Engine::Label("name", "pirulen.ttf", 38, halfW - 350, halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
-    AddNewObject(new Engine::Label("score", "pirulen.ttf", 38, halfW + 350, halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("name", "pirulen.ttf", 38, halfW - 500, halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("score", "pirulen.ttf", 38, halfW  , halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("time", "pirulen.ttf", 38, halfW + 500, halfH / 3, 255, 255, 255, 255, 0.5, 0.5));
 
     btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", halfW - 150 , halfH * 3 / 2 + 100, 300, 75);
     btn->SetOnClickCallback(std::bind(&ScoreboardScene::BackOnClick, this, 1));
@@ -68,17 +72,17 @@ void ScoreboardScene::Terminate() {
     UIGroup = nullptr;
     printf("Terminate ScoreboardScene end\n");
 }
-void ScoreboardScene::getScoreboard(std::vector<std::pair<std::string, int>>& scores) {
+void ScoreboardScene::getScoreboard(std::vector<std::tuple<std::string, int, std::string>>& scores) {
     std::ifstream file("C:/miniproject2/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
-    std::string name;
+    std::string name,timestamp;
     int score;
 
     if(!file.is_open()) {
         printf( "Error opening scoreboard.txt!!!\n");
         return;
     }
-    while (file >> name >> score) {
-        scores.push_back({name, score});
+    while (file >> name >> score >> timestamp) {
+        scores.push_back({name, score,timestamp});
     }
     file.close();
 
@@ -94,7 +98,7 @@ void ScoreboardScene::UpdateScoreboardDisplay(){
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
     int halfH = h / 2;
-    std::vector<std::pair<std::string, int>> scores;
+    std::vector<std::tuple<std::string, int, std::string>> scores;
     getScoreboard(scores);
 
     for (auto* label : scoreLabels) {
@@ -112,14 +116,19 @@ void ScoreboardScene::UpdateScoreboardDisplay(){
 
     for(int i=startIndex;i<endIndex;i++){
         //name
-        Engine::Label* nameLabel = new Engine::Label(scores[i].first, "pirulen.ttf", 48, halfW - 350, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
+        Engine::Label* nameLabel = new Engine::Label(std::get<0>(scores[i]), "pirulen.ttf", 48, halfW - 500, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
         AddNewObject(nameLabel);
         scoreLabels.push_back(nameLabel);
         //score
-        Engine::Label* scoreLabel = new Engine::Label(std::to_string(scores[i].second), "pirulen.ttf", 48,
-            halfW + 350, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
+        Engine::Label* scoreLabel = new Engine::Label(std::to_string(std::get<1>(scores[i])), "pirulen.ttf", 48,
+            halfW , halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
         AddNewObject(scoreLabel);
         scoreLabels.push_back(scoreLabel);
+        //time
+        Engine::Label* timeLabel = new Engine::Label(std::get<2>(scores[i]), "pirulen.ttf", 48,
+            halfW + 500, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
+        AddNewObject(timeLabel);
+        scoreLabels.push_back(timeLabel);
     }
     //最多七個每個height +75
 }
