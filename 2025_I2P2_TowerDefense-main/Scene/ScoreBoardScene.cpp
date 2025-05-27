@@ -1,5 +1,6 @@
 #include "ScoreBoardScene.hpp"
 #include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_primitives.h>
 #include <functional>
 #include <memory>
 #include <string>
@@ -33,14 +34,16 @@ void ScoreboardScene::Initialize() {
     Engine::ImageButton *btn;
     // std::vector<std::pair<std::string, int>> scores;
     curPage=1;
+    selectedIndex=-1;
 
-    // getScoreboard(scores);
+    getScoreboard(scores);
+    UpdateScoreboardDisplay();
 
     //stable label
     AddNewObject(new Engine::Label("Score Board", "pirulen.ttf", 60, halfW - 80, halfH / 3 -80 ,255, 255, 255, 255, 0.5, 0.5));
-    AddNewObject(new Engine::Label("name", "pirulen.ttf", 38, halfW - 500, halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
-    AddNewObject(new Engine::Label("score", "pirulen.ttf", 38, halfW  , halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
-    AddNewObject(new Engine::Label("time", "pirulen.ttf", 38, halfW + 500, halfH / 3, 255, 255, 255, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("name", "pirulen.ttf", 38, halfW - 525, halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("score", "pirulen.ttf", 38, halfW - 25 , halfH / 3 , 255, 255, 255, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("time", "pirulen.ttf", 38, halfW + 475, halfH / 3, 255, 255, 255, 255, 0.5, 0.5));
 
     btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", halfW - 150 , halfH * 3 / 2 + 100, 300, 75);
     btn->SetOnClickCallback(std::bind(&ScoreboardScene::BackOnClick, this, 1));
@@ -73,6 +76,7 @@ void ScoreboardScene::Terminate() {
     printf("Terminate ScoreboardScene end\n");
 }
 void ScoreboardScene::getScoreboard(std::vector<std::tuple<std::string, int, std::string>>& scores) {
+    scores.clear();
     std::ifstream file("C:/miniproject2/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt");
     std::string name,timestamp;
     int score;
@@ -98,8 +102,8 @@ void ScoreboardScene::UpdateScoreboardDisplay(){
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
     int halfH = h / 2;
-    std::vector<std::tuple<std::string, int, std::string>> scores;
-    getScoreboard(scores);
+    //std::vector<std::tuple<std::string, int, std::string>> scores;
+    //getScoreboard(scores);
 
     for (auto* label : scoreLabels) {
         UIGroup->RemoveObject(label->GetObjectIterator());
@@ -116,17 +120,17 @@ void ScoreboardScene::UpdateScoreboardDisplay(){
 
     for(int i=startIndex;i<endIndex;i++){
         //name
-        Engine::Label* nameLabel = new Engine::Label(std::get<0>(scores[i]), "pirulen.ttf", 48, halfW - 500, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
+        Engine::Label* nameLabel = new Engine::Label(std::get<0>(scores[i]), "pirulen.ttf", 48, halfW - 525, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
         AddNewObject(nameLabel);
         scoreLabels.push_back(nameLabel);
         //score
         Engine::Label* scoreLabel = new Engine::Label(std::to_string(std::get<1>(scores[i])), "pirulen.ttf", 48,
-            halfW , halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
+            halfW - 25 , halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
         AddNewObject(scoreLabel);
         scoreLabels.push_back(scoreLabel);
         //time
         Engine::Label* timeLabel = new Engine::Label(std::get<2>(scores[i]), "pirulen.ttf", 48,
-            halfW + 500, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
+            halfW + 475, halfH / 3 + 80 + 75 * (i - startIndex), 255, 255, 255, 255, 0.5, 0.5);
         AddNewObject(timeLabel);
         scoreLabels.push_back(timeLabel);
     }
@@ -140,6 +144,7 @@ void ScoreboardScene::PrevOnClick(int stage) {
         return;
     else{
         --curPage;
+        selectedIndex = -1;
         UpdateScoreboardDisplay();
     }
     
@@ -150,7 +155,70 @@ void ScoreboardScene::NextOnClick(int stage) {
         return;
     else{
         ++curPage;
+        selectedIndex = -1;
         UpdateScoreboardDisplay();
     }
     // Engine::GameEngine::GetInstance().ChangeScene("start");
+}
+void ScoreboardScene::OnMouseDown(int button, int mx, int my) {
+    IScene::OnMouseDown(button, mx, my);
+
+    int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
+    int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
+    int halfW = w / 2;
+    int halfH = h / 2;
+
+    int clickY = my - (halfH / 3 + 80);
+    int recordIndex = clickY / 75;
+    int startIndex = (curPage - 1) * 7;
+
+    if (recordIndex >= 0 && recordIndex < 7 && 
+        (startIndex + recordIndex) < scores.size()) {
+        
+        if (selectedIndex == startIndex + recordIndex) {
+            selectedIndex = -1;  // 取消選擇
+            return;
+        }
+
+        selectedIndex = startIndex + recordIndex;
+        selectionBoxY = halfH / 3 + 80 + 75 * recordIndex;
+        selectionBoxX = halfW;
+    }
+}
+void ScoreboardScene::OnKeyDown(int keyCode) {
+    if (keyCode == ALLEGRO_KEY_BACKSPACE && selectedIndex >= 0) {
+        scores.erase(scores.begin() + selectedIndex);
+
+        std::ofstream file("C:/miniproject2/2025_I2P2_TowerDefense-main/Resource/scoreboard.txt",std::ios::trunc);
+        for (const auto& score : scores) {
+            file << std::get<0>(score) << " " 
+                 << std::get<1>(score) << " " 
+                 << std::get<2>(score) << "\n";
+        }
+        file.close();
+        
+        if (scores.size() <= 7)
+            totalPage = 1;
+        else if (scores.size() % 7 == 0)
+            totalPage = scores.size() / 7;
+        else
+            totalPage = scores.size() / 7 + 1;
+        if (curPage > totalPage)
+            curPage = totalPage;
+
+        selectedIndex = -1;
+        UpdateScoreboardDisplay();
+    }
+}
+void ScoreboardScene::Draw() const{
+    IScene::Draw();
+    if(selectedIndex>=0){
+        al_draw_filled_rectangle(
+            selectionBoxX - 750,        // x1
+            selectionBoxY - 35,         // y1
+            selectionBoxX + 750,        // x2
+            selectionBoxY + 35,         // y2
+            al_map_rgba(0, 0, 255, 64)  // 藍色半透明
+        );
+    }
 }

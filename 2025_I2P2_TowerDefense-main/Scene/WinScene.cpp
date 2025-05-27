@@ -50,8 +50,8 @@ void WinScene::Initialize() {
     file.close();
 
     currentInput = "Player" + std::to_string(scores.size()+1);
-    inputLabel = new Engine::Label("Name: " + currentInput, "pirulen.ttf", 32, 
-        halfW, halfH /2 , 255, 255, 255, 255, 0.5, 0.5);
+    inputLabel = new Engine::Label("> Name: " + currentInput, "pirulen.ttf", 32, 
+        halfW, halfH /2 - 30, 255, 255, 255, 255, 0.5, 0.5);
     AddNewObject(inputLabel);
 
     // int newScore = dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetScene("play"))->GetMoney();
@@ -89,24 +89,23 @@ void WinScene::OnKeyDown(int key){
     if (key == ALLEGRO_KEY_BACKSPACE) {
         if(!currentInput.empty()){
             currentInput.pop_back(); 
-            inputLabel->Text = "name: " + currentInput;
-        } else {
-            return;
+            inputLabel->Text = "> name: " + currentInput;
         }
+        return;
     } else if (key == ALLEGRO_KEY_ENTER) {
         nameEntered = true; // 確認名字已經輸入完成
-        inputLabel->Text = "name: " + currentInput;
+        inputLabel->Text = "> name: " + currentInput;
         inputNewScore();
-    } else if(key==ALLEGRO_KEY_SPACE){
+    } else if(key==ALLEGRO_KEY_SPACE || key==ALLEGRO_KEY_LSHIFT || key==ALLEGRO_KEY_RSHIFT || key==ALLEGRO_KEY_LCTRL || key==ALLEGRO_KEY_RCTRL){
         return;
-    } else if (currentInput.size() < 20) { // 限制名字長度
+    } else if (currentInput.size() < 10) { // 限制名字長度
         if (key >= ALLEGRO_KEY_PAD_0 && key <= ALLEGRO_KEY_PAD_9) {
             currentInput += ('0' + (key - ALLEGRO_KEY_PAD_0));
         } else {
             currentInput += al_keycode_to_name(key);
         } 
     }
-    inputLabel->Text = "name: " + currentInput;
+    inputLabel->Text = "> name: " + currentInput;
 }
 
 void WinScene::inputNewScore(){
