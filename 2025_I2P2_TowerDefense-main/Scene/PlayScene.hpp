@@ -8,6 +8,7 @@
 
 #include "Engine/IScene.hpp"
 #include "Engine/Point.hpp"
+#include "Turret/Shovel.hpp"
 
 class Turret;
 namespace Engine {
@@ -27,12 +28,17 @@ private:
     ALLEGRO_SAMPLE_ID bgmId;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
 
+    std::vector<std::vector<Turret*>> turrets; //for remove turret
+
 protected:
     int lives;
     int money;
     int SpeedMult;
 
 public:
+    friend class Shovel;
+    bool RemoveTurret(int x, int y);
+
     static bool DebugMode;
     static const std::vector<Engine::Point> directions;
     static const int MapWidth, MapHeight;

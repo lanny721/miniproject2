@@ -23,6 +23,7 @@
 #include "Turret/MachineGunTurret.hpp"
 #include "Turret/FreezeTurret.hpp"
 #include "Turret/TurretButton.hpp"
+#include "Turret/Shovel.hpp"
 #include "UI/Animation/DirtyEffect.hpp"
 #include "UI/Animation/Plane.hpp"
 #include "UI/Component/Label.hpp"
@@ -79,11 +80,21 @@ void PlayScene::Initialize() {
     Engine::Resources::GetInstance().GetBitmap("lose/benjamin-happy.png");
     // Start BGM.
     bgmId = AudioHelper::PlayBGM("play.ogg");
+
+    turrets.resize(MapHeight, std::vector<Turret*>(MapWidth, nullptr));
 }
 void PlayScene::Terminate() {
     AudioHelper::StopBGM(bgmId);
     AudioHelper::StopSample(deathBGMInstance);
     deathBGMInstance = std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE>();
+
+    for (auto& row : turrets) {
+        for (auto& turret : row) {
+            turret = nullptr;  // TowerGroup 會負責實際刪除物件
+        }
+    }
+    turrets.clear();
+
     IScene::Terminate();
 }
 void PlayScene::Update(float deltaTime) {
@@ -230,7 +241,13 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
     const int x = mx / BlockSize;
     const int y = my / BlockSize;
     if (button & 1) {
-        if (mapState[y][x] != TILE_OCCUPIED) {
+        if(dynamic_cast<Shovel*>(preview) !=nullptr){
+            if(RemoveTurret(x, y)){
+                EarnMoney(-preview->GetPrice());
+            }
+            UIGroup->RemoveObject(preview->GetObjectIterator());
+            preview = nullptr;
+        } else if (mapState[y][x] != TILE_OCCUPIED) {
             if (!preview)
                 return;
             // Check if valid.
@@ -252,6 +269,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
             preview->Preview = false;
             preview->Tint = al_map_rgba(255, 255, 255, 255);
             TowerGroup->AddNewObject(preview);
+            turrets[y][x] = preview;
             // To keep responding when paused.
             preview->Update(0);
             // Remove Preview.
@@ -302,6 +320,9 @@ void PlayScene::OnKeyDown(int keyCode) {
     } else if (keyCode == ALLEGRO_KEY_E) {
         // Hotkey for FreezeTurret.
         UIBtnClicked(2);
+    } else if (keyCode == ALLEGRO_KEY_R) {
+        // Hotkey for Shovel.
+        UIBtnClicked(3);
     } else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
         // Hotkey for Speed up.
         SpeedMult = keyCode - ALLEGRO_KEY_0;
@@ -398,6 +419,12 @@ void PlayScene::ConstructUI() {
                            Engine::Sprite("play/turret-6.png", 1446, 136 - 8, 0, 0, 0, 0), 1446, 136, FreezeTurret::Price);
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 2));
     UIGroup->AddNewControlObject(btn);
+    // Button 4
+    btn = new TurretButton("play/floor.png", "play/dirt.png",
+                           Engine::Sprite("play/shovel-base.png", 1522, 136, 0, 0, 0, 0),
+                           Engine::Sprite("play/shovel.png", 1522, 136 - 8, 0, 0, 0, 0), 1522, 136, Shovel::Price);
+    btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 3));
+    UIGroup->AddNewControlObject(btn);
 
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
@@ -427,6 +454,12 @@ void PlayScene::UIBtnClicked(int id) {
     // if (!preview)
     //     return;
         next_preview = new FreezeTurret(0, 0);
+    }
+    else if (id == 3 && money >= Shovel::Price){
+    //     preview = new LaserTurret(0, 0);
+    // if (!preview)
+    //     return;
+        next_preview = new Shovel(0, 0);
     }
     if (!next_preview)
         return;   // not enough money or invalid turret.
@@ -497,4 +530,22 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
         }
     }
     return map;
+}
+
+bool PlayScene::RemoveTurret(int x, int y) {
+    if (x < 0 || x >= MapWidth || y < 0 || y >= MapHeight)
+        return false;
+    if (mapState[y][x] != TILE_OCCUPIED || turrets[y][x]==nullptr)
+        return false;
+    
+    // Remove turret.
+    mapState[y][x] = TILE_FLOOR;
+    TowerGroup->RemoveObject(turrets[y][x]->GetObjectIterator());
+    turrets[y][x]=nullptr;
+
+    Engine::Sprite* sprite = new DirtyEffect("play/target-invalid.png", 1, 
+        x * BlockSize + BlockSize / 2, 
+        y * BlockSize + BlockSize / 2);
+    GroundEffectGroup->AddNewObject(sprite);
+    return true;
 }

@@ -18,7 +18,7 @@ public:
     void Terminate() override;
     void Update(float deltaTime) override;
     void BackOnClick(int stage);
-    void OnKeyDown(int keyCode);
+    void OnKeyDown(int keyCode) override;
     void inputNewScore();
 };
 
